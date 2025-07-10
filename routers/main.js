@@ -1,36 +1,53 @@
 const express = require('express');
 const router = express.Router();
 const { ensureAuthenticated } = require('../middlewares/auth');
+const { keycloak } = require('../keycloak-config');
 
-// Accueil (tableau de bord)
+// Accueil (auth classique - session)
 router.get('/', ensureAuthenticated, (req, res) => {
-  res.render('index', { nom: req.user?.username, page: 'tableau' });
+  res.render('index', {
+    nom: req.session?.user?.username || 'Visiteur',
+    page: 'index'
+  });
 });
 
-// About (accessible sans auth)
+router.get('/home', ensureAuthenticated, (req, res) => {
+  res.render('index', {
+    nom: req.session?.user?.username || 'Visiteur',
+    page: 'index'
+  });
+});
+
+// À propos - accessible sans être connecté
 router.get('/about', (req, res) => {
-  // Ici pas de user, donc on peut mettre nom à null ou vide si pas connecté
   res.render('about', { nom: null });
 });
 
-// Profile
-router.get('/profile', ensureAuthenticated, (req, res) => {
-  res.render('profiles', { nom: req.user?.username, page: 'profile' });
+// SSO : profil utilisateur connecté via Keycloak
+router.get('/profile', keycloak.protect(), (req, res) => {
+  const nom = req.kauth?.grant?.access_token?.content?.preferred_username || 'SSO';
+  res.render('profiles', { nom, page: 'profile' });
 });
 
-// Settings
-router.get('/settings', ensureAuthenticated, (req, res) => {
-  res.render('settings', { nom: req.user?.username, page: 'settings' });
+router.get('/settings', keycloak.protect(), (req, res) => {
+  const nom = req.kauth?.grant?.access_token?.content?.preferred_username || 'SSO';
+  res.render('settings', { nom, page: 'settings' });
 });
 
-// Tableau
-router.get('/tableau', ensureAuthenticated, (req, res) => {
-  res.render('tableau', { nom: req.user?.username, page: 'tableau' });
+router.get('/tableau', keycloak.protect(), (req, res) => {
+  const nom = req.kauth?.grant?.access_token?.content?.preferred_username || 'SSO';
+  res.render('tableau', { nom, page: 'tableau' });
 });
 
-// Abouts
-router.get('/abouts', ensureAuthenticated, (req, res) => {
-  res.render('abouts', { nom: req.user?.username, page: 'abouts' });
+router.get('/abouts', keycloak.protect(), (req, res) => {
+  const nom = req.kauth?.grant?.access_token?.content?.preferred_username || 'SSO';
+  res.render('abouts', { nom, page: 'abouts' });
+});
+
+// Exemple d'affichage de données utilisateur (SSO)
+router.get('/private', keycloak.protect(), (req, res) => {
+  const user = req.kauth?.grant?.access_token?.content;
+  res.send(`Bonjour ${user?.preferred_username}, votre email est ${user?.email}`);
 });
 
 module.exports = router;
