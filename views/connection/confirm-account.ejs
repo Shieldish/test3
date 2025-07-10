@@ -1,0 +1,20 @@
+<%- include('../partials/header') %>
+<div class="container d-flex flex-column justify-content-center align-items-center" style="min-height: 80vh;">
+  <div class="card shadow p-4" style="max-width: 400px; width: 100%;">
+    <h3 class="mb-3 text-center">Activation du compte</h3>
+    <% if (error) { %>
+      <div class="alert alert-danger" role="alert"><%= error %></div>
+    <% } %>
+    <form method="POST" action="/confirm-account">
+      <div class="mb-3">
+        <label for="otp" class="form-label">Code OTP reçu par email</label>
+        <input type="text" class="form-control" id="otp" name="otp" maxlength="6" required autofocus pattern="[0-9]{6}" placeholder="Ex: 123456">
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Valider</button>
+    </form>
+    <div class="mt-3 text-center">
+      <a href="/register">Retour à l'inscription</a>
+    </div>
+  </div>
+</div>
+<%- include('../partials/footer') %>

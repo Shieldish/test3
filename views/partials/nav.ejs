@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <!-- Lien vers le CSS de Bootstrap -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Lien vers le CSS de FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Ajout de styles personnalisés si nécessaire */
+    </style>
+</head>
+<body>
+    <nav style="background:#4078c0;overflow-x:hidden;padding:12px 8px;">
+        <div style="overflow-x:hidden;max-width:100vw;">
+            <div style="color:white; margin-bottom:0.5rem; display:flex; flex-wrap:wrap; align-items:center; gap:1rem;">
+                <a href="/" class="<%= page === 'tableau' ? 'active' : '' %>" style="color:white; text-decoration:none; font-weight:bold;"><i class="fa-solid fa-house"></i> Accueil</a>
+                <a href="/abouts" class="<%= page === 'abouts' ? 'active' : '' %>" style="color:white; text-decoration:none; margin-left:1rem;"><i class="fa-solid fa-circle-info"></i> À propos</a>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem; justify-content:flex-end; width:100%; max-width:100vw;">
+                <span style="color:white; margin-right:0.5rem; white-space:nowrap;">Bienvenue, <%= nom %> !</span>
+                <a href="/logout" style="border:1px solid #fff; color:#fff; background:transparent; font-size:0.95rem; display:flex; align-items:center; min-width:80px; max-width:140px; padding:6px 12px; overflow-x:hidden; text-decoration:none; justify-content:center; border-radius:6px;"> <i class="fa-solid fa-right-from-bracket" style="margin-right:0.25rem;"></i> Déconnexion</a>
+                <button id="toggle-mode-btn" onclick="toggleMode()" type="button" style="background:#fff; color:#000; border:none; font-size:0.95rem; display:flex; align-items:center; min-width:80px; max-width:140px; padding:6px 12px; overflow-x:hidden; justify-content:center; border-radius:6px;"> <i class="fa-solid fa-moon" style="margin-right:0.25rem;"></i> Mode sombre</button>
+            </div>
+        </div>
+    </nav>
+
+
+
+    <!-- Lien vers le JavaScript de Bootstrap -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <!-- Lien vers le JavaScript personnalisé si nécessaire -->
+    <script>
+        function toggleMode() {
+            const isDark = document.body.classList.contains('darkmode');
+            setMode(isDark ? 'light' : 'dark');
+        }
+    </script>
+</body>
+</html>

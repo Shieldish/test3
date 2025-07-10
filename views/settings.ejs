@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <%- include('partials/header.ejs') %>
+</head>
+<body>
+    <%- include('partials/nav.ejs', { nom }) %>
+    <%- include('partials/sidebar.ejs') %>
+    <main class="main-content" style="min-height:100vh; margin-left:180px;">
+        <div class="container py-4">
+            <h1 class="mb-4"><i class="fa-solid fa-gear me-2"></i>Paramètres</h1>
+            <div class="alert alert-warning">Ici, vous pourrez modifier les paramètres de votre compte.</div>
+        </div>
+    </main>
+    <%- include('partials/footer.ejs') %>
+</body>
+</html>

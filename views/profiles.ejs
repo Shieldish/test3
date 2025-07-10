@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <%- include('partials/header.ejs') %>
+</head>
+<body>
+    <%- include('partials/nav.ejs', { nom }) %>
+    <%- include('partials/sidebar.ejs') %>
+    <main class="main-content" style="min-height:100vh; margin-left:180px;">
+        <div class="container py-4">
+            <h1 class="mb-4"><i class="fa-solid fa-user me-2"></i>Profil</h1>
+            <!-- Contenu du profil utilisateur ici -->
+            <div class="alert alert-info">Bienvenue sur votre page de profil !</div>
+        </div>
+    </main>
+    <%- include('partials/footer.ejs') %>
+</body>
+</html>

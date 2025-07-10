@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <%- include('partials/header.ejs') %>
+</head>
+<body>
+    <%- include('partials/nav.ejs', { nom }) %>
+    <%- include('partials/sidebar.ejs') %>
+    <main class="main-content" style="min-height:100vh; margin-left:180px;">
+        <div class="container py-4">
+            <h1 class="mb-4"><i class="fa-solid fa-circle-info me-2"></i>À propos</h1>
+            <div class="alert alert-secondary">Ceci est la page à propos de votre application.</div>
+        </div>
+    </main>
+    <%- include('partials/footer.ejs') %>
+</body>
+</html>

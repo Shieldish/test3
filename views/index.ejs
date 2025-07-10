@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <%- include('partials/header.ejs') %>
+    <!-- Suppression du style interne, le CSS est maintenant dans styles.css -->
+</head>
+<body>
+    <%- include('partials/nav.ejs', { nom }) %>
+    <%- include('partials/sidebar.ejs', { page }) %>
+    <main class="main-content" style="min-height:100vh; margin-left:180px;">
+        <h1>Bienvenue sur votre espace, <%= nom %> !</h1>
+        <p>Ceci est la page d'accueil sécurisée de votre application.</p>
+    </main>
+    <%- include('partials/footer.ejs') %>
+</body>
+</html>
