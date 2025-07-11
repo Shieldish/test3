@@ -10,7 +10,7 @@ const keycloak = new Keycloak({ store: memoryStore }, {
   'ssl-required': 'external',
   resource: 'node-app', // Client ID
   credentials: {
-    secret: 'TqAWx8Y95cXwWJAbu0BrftuAcoVOzh9T' // Copie le secret depuis Keycloak > Clients > node-app > Credentials
+    secret: 'hqxLbotT0kdM6UJuTu5mArUTl4Bwt0Tz' // Copie le secret depuis Keycloak > Clients > node-app > Credentials
   },
   'confidential-port': 0
 });

@@ -1,4 +1,5 @@
 const express = require('express');
+const axios = require('axios');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -9,79 +10,189 @@ const { sendResetEmail } = require('../utils/emails');
 
 router.use(cookieParser());
 
-// GET: Pages de connexion / inscription / mot de passe oublié
-router.get('/login', (req, res) => res.render('connection/login'));
-router.get('/register', (req, res) => res.render('connection/register'));
+/* --------------------- AUTH PAGES --------------------- */
+
+// GET: Custom login / register / forgot-password
+router.get('/login', (req, res) => res.render('connection/login', { error: null }));
+router.get('/register', (req, res) => res.render('connection/register', { error: null }));
 router.get('/forgot-password', (req, res) => res.render('connection/forgot-password', { error: null, success: null }));
 
-// POST: Connexion avec JWT
+/* --------------------- CUSTOM LOGIN --------------------- */
+
 router.post('/login', async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
+
   try {
-    const user = await User.findOne({ where: { username } });
-    if (!user) return res.render('connection/login', { error: 'Utilisateur non trouvé.' });
-
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.render('connection/login', { error: 'Mot de passe incorrect.' });
-
-    const token = jwt.sign(
-      { userId: user.id, username: user.username },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '1h' }
+    // Request token from Keycloak using ROPC flow
+    const tokenResponse = await axios.post(
+      'http://localhost:8090/realms/myapp/protocol/openid-connect/token',
+      new URLSearchParams({
+        grant_type: 'password',
+        client_id: 'node-app',
+        client_secret: 'hqxLbotT0kdM6UJuTu5mArUTl4Bwt0Tz',
+        username:email,
+        password
+      }),
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     );
 
-    res.cookie('auth_token', token, {
+    const { access_token } = tokenResponse.data;
+
+    // Store the token in a secure cookie
+    res.cookie('auth_token', access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 3600000
+      maxAge: 3600000 // 1 hour
     });
 
     res.redirect('/');
-  } catch {
-    res.render('connection/login', { error: 'Erreur serveur.' });
-  }
+  }catch (err) {
+  console.error('Keycloak login error:', err.response?.data || err.message);
+  const message = err.response?.data?.error_description || 'Erreur de connexion.';
+  res.render('connection/login', { error: message });
+}
+
 });
 
-// POST: Inscription + envoi OTP
+/* --------------------- KEYCLOAK REGISTRATION --------------------- */
+
+/* router.post('/register', async (req, res) => {
+  const { email, username, password, confirmPassword } = req.body;
+  const emailRegex = /^[\w-.]+@[\w-]+\.[a-zA-Z]{2,}$/;
+
+  if (!email || !username || !password || !confirmPassword) {
+    return res.render('connection/register', { error: 'Tous les champs sont obligatoires.' });
+  }
+  if (!emailRegex.test(email)) {
+    return res.render('connection/register', { error: 'Format d\'email invalide.' });
+  }
+  if (password !== confirmPassword) {
+    return res.render('connection/register', { error: 'Les mots de passe ne correspondent pas.' });
+  }
+
+  try {
+    // 1. Get admin token to create user
+    const tokenRes = await axios.post(
+      'http://localhost:8090/realms/master/protocol/openid-connect/token',
+      new URLSearchParams({
+        grant_type: 'password',
+        client_id: 'admin-cli',
+        username: 'admin', // Keycloak admin
+        password: 'admin'  // Keycloak admin password
+      }),
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+    );
+
+    const adminToken = tokenRes.data.access_token;
+
+   await axios.post(
+  'http://localhost:8090/admin/realms/myapp/users',
+  {
+    username,
+    email,
+    enabled: true,
+    emailVerified: false,
+    credentials: [{
+      type: 'password',
+      value: password,
+      temporary: false
+    }],
+    requiredActions: [] // Make sure it's empty
+  },
+  {
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    }
+  }
+);
+
+
+
+    res.redirect('/login');
+  } catch (err) {
+    console.error(err.response?.data || err.message);
+    res.render('connection/register', {
+      error: 'Erreur lors de la création du compte (peut-être utilisateur ou email déjà existant).'
+    });
+  }
+});
+ */
 router.post('/register', async (req, res) => {
   const { email, username, password, confirmPassword } = req.body;
   const emailRegex = /^[\w-.]+@[\w-]+\.[a-zA-Z]{2,}$/;
 
-  if (!email || !username || !password || !confirmPassword)
+  // Vérification des champs obligatoires
+  if (!email || !username || !password || !confirmPassword ) {
     return res.render('connection/register', { error: 'Tous les champs sont obligatoires.' });
-  if (!emailRegex.test(email))
+  }
+
+  // Validation email
+  if (!emailRegex.test(email)) {
     return res.render('connection/register', { error: 'Format d\'email invalide.' });
-  if (password !== confirmPassword)
+  }
+
+  // Vérification des mots de passe
+  if (password !== confirmPassword) {
     return res.render('connection/register', { error: 'Les mots de passe ne correspondent pas.' });
+  }
 
   try {
-    if (await User.findOne({ where: { username } }))
-      return res.render('connection/register', { error: 'Nom d\'utilisateur déjà utilisé.' });
-    if (await User.findOne({ where: { email } }))
-      return res.render('connection/register', { error: 'Email déjà utilisé.' });
+    // Obtenir un token d'admin Keycloak
+    const tokenRes = await axios.post(
+      'http://localhost:8090/realms/master/protocol/openid-connect/token',
+      new URLSearchParams({
+        grant_type: 'password',
+        client_id: 'admin-cli',
+        username: 'admin',
+        password: 'admin'
+      }),
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+    );
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+    const adminToken = tokenRes.data.access_token;
 
-    const user = await User.create({ email, username, password: hashedPassword, otp, otpExpires, active: false });
-    await sendOtpEmail(email, otp);
+    // Création de l'utilisateur dans Keycloak
+    await axios.post(
+      'http://localhost:8090/admin/realms/myapp/users',
+      {
+        username,
+        email,
+        firstName :username,
+        lastName:username,
+        enabled: true,
+        emailVerified: false,
+        credentials: [{
+          type: 'password',
+          value: password,
+          temporary: false
+        }],
+        requiredActions: []
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${adminToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
 
-    const pendingToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'secret', { expiresIn: '15m' });
-    res.cookie('pending_token', pendingToken, { httpOnly: true, maxAge: 15 * 60 * 1000 });
-    res.redirect('/confirm-account');
-  } catch {
-    res.render('connection/register', { error: 'Erreur serveur.' });
+    res.redirect('/login');
+  } catch (err) {
+    console.error(err.response?.data || err.message);
+    res.render('connection/register', {
+      error: 'Erreur lors de la création du compte (peut-être utilisateur ou email déjà existant).'
+    });
   }
 });
 
-// GET: Confirmation OTP
+/* --------------------- CONFIRMATION OTP (if using local user DB) --------------------- */
+
 router.get('/confirm-account', (req, res) => {
   if (!req.cookies.pending_token) return res.redirect('/register');
   res.render('connection/confirm-account', { error: null });
 });
 
-// POST: Validation OTP
 router.post('/confirm-account', async (req, res) => {
   const { otp } = req.body;
   const token = req.cookies.pending_token;
@@ -90,8 +201,9 @@ router.post('/confirm-account', async (req, res) => {
   try {
     const { userId } = jwt.verify(token, process.env.JWT_SECRET || 'secret');
     const user = await User.findByPk(userId);
-    if (!user || otp !== user.otp || new Date() > user.otpExpires)
+    if (!user || otp !== user.otp || new Date() > user.otpExpires) {
       return res.render('connection/confirm-account', { error: 'Code OTP invalide ou expiré.' });
+    }
 
     user.active = true;
     user.otp = null;
@@ -105,23 +217,20 @@ router.post('/confirm-account', async (req, res) => {
   }
 });
 
-// GET: Déconnexion
-router.get('/logout', (req, res) => {
-  res.clearCookie('auth_token'); // Remove the JWT cookie
+/* --------------------- LOGOUT --------------------- */
 
-  // If using sessions, destroy it
+router.get('/logout', (req, res) => {
+  res.clearCookie('auth_token');
   if (req.session) {
     req.session.destroy(err => {
-      if (err) {
-        console.error('Erreur de destruction de session :', err);
-      }
+      if (err) console.error('Erreur session :', err);
     });
   }
-
-  res.redirect('/login'); // or any other route
+  res.redirect('/login');
 });
 
-// POST: Forgot password (envoi lien)
+/* --------------------- FORGOT PASSWORD / RESET --------------------- */
+
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -138,10 +247,10 @@ router.post('/forgot-password', async (req, res) => {
   const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'reset_secret', { expiresIn: '1h' });
   const resetLink = `${process.env.APP_URL || 'http://localhost:3000'}/reset-password/${token}`;
   await sendResetEmail(email, resetLink);
+
   res.render('connection/forgot-password', { error: null, success: 'Un email de réinitialisation a été envoyé.' });
 });
 
-// GET: Page reset password
 router.get('/reset-password/:token', (req, res) => {
   const { token } = req.params;
   try {
@@ -152,7 +261,6 @@ router.get('/reset-password/:token', (req, res) => {
   }
 });
 
-// POST: Réinitialisation mot de passe
 router.post('/reset-password/:token', async (req, res) => {
   const { token } = req.params;
   const { password, confirmPassword } = req.body;
@@ -175,5 +283,43 @@ router.post('/reset-password/:token', async (req, res) => {
     res.render('connection/reset-password', { error: 'Lien invalide ou expiré.', token: null });
   }
 });
+
+router.get('/oauth/callback', async (req, res) => {
+  const { code } = req.query;
+
+  if (!code) return res.redirect('/login');
+
+  try {
+    const tokenRes = await axios.post(
+      'http://localhost:8090/realms/myapp/protocol/openid-connect/token',
+      new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: 'http://localhost:3000/oauth/callback',
+        client_id: 'node-app',
+        client_secret: 'hqxLbotT0kdM6UJuTu5mArUTl4Bwt0Tz'
+      }),
+      {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      }
+    );
+
+    const { access_token } = tokenRes.data;
+
+    // Tu peux stocker le token dans un cookie sécurisé
+    res.cookie('auth_token', access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 3600000
+    });
+
+    res.redirect('/');
+  } catch (err) {
+    console.error(err.response?.data || err.message);
+    res.redirect('/login');
+  }
+});
+
+
 
 module.exports = router;
