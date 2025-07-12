@@ -6,11 +6,38 @@
 <body>
     <%- include('partials/nav.ejs', { nom }) %>
     <%- include('partials/sidebar.ejs') %>
-    <main class="main-content" style="min-height:100vh; margin-left:180px;">
+    <main class="main-content" style="min-height:100vh; margin-left:180px; padding: 50px;">
         <div class="container py-4">
             <h1 class="mb-4"><i class="fa-solid fa-gear me-2"></i>Paramètres</h1>
             <div class="alert alert-warning">Ici, vous pourrez modifier les paramètres de votre compte.</div>
         </div>
+        <p>Pour modifier vos informations personnelles, rendez-vous sur la page <a href="/profile">Mon Profil</a>.</p>
+        <p>Pour gérer vos paramètres de sécurité, cliquez sur le lien suivant : <a href="/security">Sécurité</a>.</p>
+        <p>Pour consulter vos notifications, rendez-vous sur la page <a href="/notifications">Notifications</a>.</p>
+        <p>Pour accéder à votre historique d'activités, cliquez sur le lien suivant :<a href="/activity">Activités</a>.</p>
+        <p>Pour personnaliser votre expérience, visitez la page <a href="/settings">Paramètres</a>.</p>
+        <p>Pour consulter les dernières mises à jour, cliquez sur le lien suivant : <a href="/updates">Mises à jour</a>.</p>
+        <p>Pour en savoir plus sur notre politique de confidentialité, rendez-vous sur la page <a href="/privacy">Confidentialité</a>.</p>
+        <p>Pour consulter nos conditions d'utilisation, cliquez sur le lien suivant : <a href="/terms">Conditions d'utilisation</a>.</p>
+        <p>Pour accéder à notre blog, cliquez sur le lien suivant : <a href="/blog">Blog</a>.</p>
+        <p>Pour consulter notre documentation, rendez-vous sur la page <a href="/docs">Documentation</a>.</p>
+        <p>Pour accéder à notre forum, cliquez sur le lien suivant : <a href="/forum">Forum</a>.</p>
+        <p>Pour consulter notre FAQ, rendez-vous sur la page <a href="/faq">FAQ</a>.</p>
+
+        <form action="/settings" method="POST">
+            <h2 class="mt-4">Couleur de fond</h2>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="theme" id="theme-light" value="light" checked>
+                <label class="form-check-label" for="theme-light">clair</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="theme" id="theme-dark" value="dark">
+                <label class="form-check-label" for="theme-dark">sombre</label>
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">Enregistrer</button>
+        </form>
+
+
     </main>
     <%- include('partials/footer.ejs') %>
 </body>

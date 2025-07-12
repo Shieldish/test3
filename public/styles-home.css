@@ -110,11 +110,11 @@ p {
     padding: 6px 14px;
 }
 .sidebar {
-    width: 200px;
-    background: #f1f2f6;
+    width: auto;
+    background: #ffffff;
     position: fixed;
     top: auto;
-    left: 0;
+
     height: calc(100vh - 56px);
     padding: 24px 0 0 0;
     box-shadow: 2px 0 8px rgba(0,0,0,0.04);
